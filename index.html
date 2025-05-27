@@ -1,0 +1,1169 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Task Time Tracker</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(45deg, #2c3e50, #3498db);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+        }
+
+        .header p {
+            opacity: 0.9;
+            font-size: 1.1em;
+        }
+
+        .add-task-section {
+            padding: 30px;
+            border-bottom: 2px solid #ecf0f1;
+        }
+
+        .task-input-container {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+
+        #taskInput {
+            flex: 2;
+            padding: 15px;
+            border: 2px solid #bdc3c7;
+            border-radius: 8px;
+            font-size: 16px;
+            transition: border-color 0.3s;
+            min-width: 200px;
+        }
+
+        #targetTimeInput {
+            flex: 1;
+            padding: 15px;
+            border: 2px solid #bdc3c7;
+            border-radius: 8px;
+            font-size: 16px;
+            transition: border-color 0.3s;
+            min-width: 120px;
+        }
+
+        #taskInput:focus,
+        #targetTimeInput:focus {
+            outline: none;
+            border-color: #3498db;
+        }
+
+        .btn {
+            padding: 15px 25px;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-weight: 600;
+        }
+
+        .btn-primary {
+            background: #3498db;
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: #2980b9;
+            transform: translateY(-2px);
+        }
+
+        .btn-success {
+            background: #27ae60;
+            color: white;
+        }
+
+        .btn-success:hover {
+            background: #229954;
+        }
+
+        .btn-warning {
+            background: #f39c12;
+            color: white;
+        }
+
+        .btn-warning:hover {
+            background: #e67e22;
+        }
+
+        .btn-danger {
+            background: #e74c3c;
+            color: white;
+        }
+
+        .btn-danger:hover {
+            background: #c0392b;
+        }
+
+        .btn-info {
+            background: #17a2b8;
+            color: white;
+        }
+
+        .btn-info:hover {
+            background: #138496;
+        }
+
+        .btn-small {
+            padding: 8px 15px;
+            font-size: 14px;
+        }
+
+        .current-day {
+            background: #e8f4fd;
+            padding: 15px 30px;
+            text-align: center;
+            border-bottom: 2px solid #ecf0f1;
+            font-weight: 600;
+            color: #2c3e50;
+        }
+
+        .tasks-section {
+            padding: 30px;
+        }
+
+        .tasks-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 25px;
+            flex-wrap: wrap;
+            gap: 15px;
+        }
+
+        .tasks-header h2 {
+            color: #2c3e50;
+            font-size: 1.8em;
+        }
+
+        .header-buttons {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        .task-item {
+            background: #f8f9fa;
+            border: 2px solid #ecf0f1;
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 15px;
+            transition: all 0.3s;
+        }
+
+        .task-item:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+        }
+
+        .task-item.running {
+            border-color: #27ae60;
+            background: #d5f4e6;
+        }
+
+        .task-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+
+        .task-name {
+            font-size: 1.3em;
+            font-weight: 600;
+            color: #2c3e50;
+            flex: 1;
+        }
+
+        .task-time {
+            font-size: 1.5em;
+            font-weight: 700;
+            color: #27ae60;
+            margin: 0 20px;
+            font-family: 'Courier New', monospace;
+        }
+
+        .task-target {
+            font-size: 0.9em;
+            color: #7f8c8d;
+            margin-top: 5px;
+        }
+
+        .task-progress {
+            width: 100%;
+            height: 8px;
+            background: #ecf0f1;
+            border-radius: 4px;
+            margin-top: 10px;
+            overflow: hidden;
+        }
+
+        .task-progress-bar {
+            height: 100%;
+            background: linear-gradient(90deg, #27ae60, #2ecc71);
+            border-radius: 4px;
+            transition: width 0.3s;
+        }
+
+        .task-progress-bar.overtime {
+            background: linear-gradient(90deg, #e74c3c, #c0392b);
+        }
+
+        .task-controls {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+
+        .task-status {
+            padding: 5px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .status-running {
+            background: #27ae60;
+            color: white;
+        }
+
+        .status-paused {
+            background: #f39c12;
+            color: white;
+        }
+
+        .status-stopped {
+            background: #95a5a6;
+            color: white;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+            color: #7f8c8d;
+        }
+
+        .empty-state h3 {
+            font-size: 1.5em;
+            margin-bottom: 10px;
+        }
+
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .stat-card {
+            background: linear-gradient(45deg, #667eea, #764ba2);
+            color: white;
+            padding: 20px;
+            border-radius: 12px;
+            text-align: center;
+        }
+
+        .stat-value {
+            font-size: 2em;
+            font-weight: 700;
+            margin-bottom: 5px;
+        }
+
+        .stat-label {
+            opacity: 0.9;
+            font-size: 0.9em;
+        }
+
+        .analysis-section {
+            background: #f8f9fa;
+            padding: 30px;
+            margin: 30px;
+            border-radius: 12px;
+            border: 2px solid #ecf0f1;
+        }
+
+        .analysis-header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .analysis-header h2 {
+            color: #2c3e50;
+            font-size: 1.8em;
+            margin-bottom: 10px;
+        }
+
+        .charts-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+            gap: 30px;
+            margin-bottom: 30px;
+        }
+
+        .chart-container {
+            background: white;
+            padding: 20px;
+            border-radius: 12px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+            text-align: center;
+        }
+
+        .chart-title {
+            font-size: 1.2em;
+            font-weight: 600;
+            color: #2c3e50;
+            margin-bottom: 20px;
+        }
+
+        .chart-canvas {
+            max-width: 100%;
+            height: 300px;
+        }
+
+        .insights {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+        }
+
+        .insight-card {
+            background: white;
+            padding: 20px;
+            border-radius: 12px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+            border-left: 4px solid #3498db;
+            text-align: center;
+        }
+
+        .insight-icon {
+            font-size: 2em;
+            margin-bottom: 10px;
+        }
+
+        .insight-title {
+            font-weight: 600;
+            color: #2c3e50;
+            margin-bottom: 5px;
+        }
+
+        .insight-value {
+            font-size: 1.2em;
+            font-weight: 700;
+            color: #3498db;
+            margin-bottom: 5px;
+        }
+
+        .insight-description {
+            font-size: 0.9em;
+            color: #7f8c8d;
+        }
+
+        .logs-modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+        }
+
+        .logs-content {
+            background-color: white;
+            margin: 5% auto;
+            padding: 30px;
+            border-radius: 15px;
+            width: 90%;
+            max-width: 800px;
+            max-height: 80vh;
+            overflow-y: auto;
+        }
+
+        .logs-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .close {
+            color: #aaa;
+            font-size: 28px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+
+        .close:hover {
+            color: #000;
+        }
+
+        .log-entry {
+            background: #f8f9fa;
+            border: 1px solid #ecf0f1;
+            border-radius: 8px;
+            padding: 15px;
+            margin-bottom: 15px;
+        }
+
+        .log-date {
+            font-weight: 600;
+            color: #2c3e50;
+            margin-bottom: 10px;
+        }
+
+        .log-tasks {
+            margin-left: 20px;
+        }
+
+        .log-task {
+            margin-bottom: 5px;
+            color: #7f8c8d;
+        }
+
+        @media (max-width: 768px) {
+            .task-input-container {
+                flex-direction: column;
+            }
+
+            #taskInput,
+            #targetTimeInput {
+                min-width: unset;
+            }
+
+            .task-header {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 10px;
+            }
+
+            .task-controls {
+                width: 100%;
+                justify-content: flex-start;
+            }
+
+            .tasks-header {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 15px;
+            }
+
+            .charts-container {
+                grid-template-columns: 1fr;
+            }
+
+            .chart-container {
+                min-width: 300px;
+            }
+
+            .logs-content {
+                margin: 10% auto;
+                width: 95%;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>⏱️ Task Time Tracker</h1>
+            <p>Track your productivity with precision stopwatch timing and daily goals</p>
+        </div>
+
+        <div class="current-day" id="currentDay">
+            Today: Monday, May 27, 2025
+        </div>
+
+        <div class="add-task-section">
+            <div class="task-input-container">
+                <input type="text" id="taskInput" placeholder="Enter a new task..." maxlength="100">
+                <input type="number" id="targetTimeInput" placeholder="Target (minutes)" min="1" max="1440">
+                <button class="btn btn-primary" onclick="addTask()">
+                    ➕ Add Task
+                </button>
+            </div>
+        </div>
+
+        <div class="tasks-section">
+            <div class="stats" id="stats">
+                <div class="stat-card">
+                    <div class="stat-value" id="totalTasks">0</div>
+                    <div class="stat-label">Total Tasks</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value" id="totalTime">00:00:00</div>
+                    <div class="stat-label">Total Time Tracked</div>
+                </div>
+            </div>
+
+            <div class="analysis-section" id="analysisSection" style="display: none;">
+                <div class="analysis-header">
+                    <h2>📊 Time Analysis</h2>
+                    <p>Visual insights into your time allocation and productivity patterns</p>
+                </div>
+
+                <div class="charts-container">
+                    <div class="chart-container">
+                        <div class="chart-title">Time Distribution by Task</div>
+                        <canvas id="pieChart" class="chart-canvas"></canvas>
+                    </div>
+                    <div class="chart-container">
+                        <div class="chart-title">Task Completion Status</div>
+                        <canvas id="statusChart" class="chart-canvas"></canvas>
+                    </div>
+                </div>
+
+                <div class="insights" id="insights"></div>
+            </div>
+
+            <div class="tasks-header">
+                <h2>Your Tasks</h2>
+                <div class="header-buttons">
+                    <button class="btn btn-info btn-small" onclick="showLogs()" id="logsBtn" style="display: none;">
+                        📊 View Logs
+                    </button>
+                    <button class="btn btn-danger btn-small" onclick="clearAllTasks()" id="clearBtn"
+                        style="display: none;">
+                        🗑️ Clear All
+                    </button>
+                </div>
+            </div>
+
+            <div id="tasksList">
+                <div class="empty-state">
+                    <h3>No tasks yet!</h3>
+                    <p>Add your first task above with a target time to start tracking</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Logs Modal -->
+    <div id="logsModal" class="logs-modal">
+        <div class="logs-content">
+            <div class="logs-header">
+                <h2>📊 Daily Logs</h2>
+                <span class="close" onclick="closeLogs()">&times;</span>
+            </div>
+            <div id="logsContent">
+                <p>No logs available yet.</p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        class TaskTracker {
+            constructor() {
+                this.currentDate = this.getCurrentDate();
+                this.checkDateChange();
+                this.tasks = JSON.parse(localStorage.getItem(`tasks_${this.currentDate}`)) || [];
+                this.nextId = parseInt(localStorage.getItem(`nextId_${this.currentDate}`)) || 1;
+                this.intervals = {};
+                this.updateCurrentDay();
+                this.render();
+                this.updateStats();
+                this.updateAnalysis();
+
+                // Add keyboard shortcut for adding tasks
+                document.getElementById('taskInput').addEventListener('keypress', (e) => {
+                    if (e.key === 'Enter') {
+                        this.addTask();
+                    }
+                });
+
+                document.getElementById('targetTimeInput').addEventListener('keypress', (e) => {
+                    if (e.key === 'Enter') {
+                        this.addTask();
+                    }
+                });
+            }
+
+            getCurrentDate() {
+                const now = new Date();
+                return now.toISOString().split('T')[0]; // YYYY-MM-DD format
+            }
+
+            checkDateChange() {
+                const lastDate = localStorage.getItem('lastActiveDate');
+                const currentDate = this.getCurrentDate();
+
+                if (lastDate && lastDate !== currentDate) {
+                    // Save current day's data to logs before switching
+                    this.saveToLogs(lastDate);
+                }
+
+                localStorage.setItem('lastActiveDate', currentDate);
+            }
+
+            updateCurrentDay() {
+                const date = new Date();
+                const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
+                const formattedDate = date.toLocaleDateString('en-US', options);
+                document.getElementById('currentDay').textContent = `Today: ${formattedDate}`;
+            }
+
+            saveToLogs(date) {
+                const tasks = JSON.parse(localStorage.getItem(`tasks_${date}`)) || [];
+                if (tasks.length === 0) return;
+
+                const logs = JSON.parse(localStorage.getItem('dailyLogs')) || {};
+
+                const dayLog = {
+                    date: date,
+                    totalTasks: tasks.length,
+                    totalTime: tasks.reduce((sum, task) => sum + (task.totalTime || 0), 0),
+                    completedTasks: tasks.filter(task => task.targetTime && (task.totalTime || 0) >= task.targetTime * 60000).length,
+                    tasks: tasks.map(task => ({
+                        name: task.name,
+                        totalTime: task.totalTime || 0,
+                        targetTime: task.targetTime || 0,
+                        completed: task.targetTime && (task.totalTime || 0) >= task.targetTime * 60000
+                    }))
+                };
+
+                logs[date] = dayLog;
+                localStorage.setItem('dailyLogs', JSON.stringify(logs));
+            }
+
+            addTask() {
+                const taskInput = document.getElementById('taskInput');
+                const targetInput = document.getElementById('targetTimeInput');
+                const taskName = taskInput.value.trim();
+                const targetTime = parseInt(targetInput.value);
+
+                if (!taskName) {
+                    alert('Please enter a task name!');
+                    return;
+                }
+
+                if (!targetTime || targetTime < 1) {
+                    alert('Please enter a target time in minutes!');
+                    return;
+                }
+
+                if (taskName.length > 100) {
+                    alert('Task name is too long! Please keep it under 100 characters.');
+                    return;
+                }
+
+                const newTask = {
+                    id: this.nextId++,
+                    name: taskName,
+                    targetTime: targetTime, // in minutes
+                    totalTime: 0,
+                    isRunning: false,
+                    startTime: null,
+                    createdAt: new Date().toISOString()
+                };
+
+                this.tasks.unshift(newTask);
+                taskInput.value = '';
+                targetInput.value = '';
+                this.saveToStorage();
+                this.render();
+                this.updateStats();
+                this.updateAnalysis();
+            }
+
+            startTask(taskId) {
+                // Stop all other running tasks
+                this.tasks.forEach(task => {
+                    if (task.isRunning && task.id !== taskId) {
+                        this.pauseTask(task.id);
+                    }
+                });
+
+                const task = this.tasks.find(t => t.id === taskId);
+                if (!task || task.isRunning) return;
+
+                task.isRunning = true;
+                task.startTime = Date.now();
+
+                this.intervals[taskId] = setInterval(() => {
+                    this.updateTaskDisplay(taskId);
+                }, 100);
+
+                this.saveToStorage();
+                this.render();
+                this.updateStats();
+                this.updateAnalysis();
+            }
+
+            pauseTask(taskId) {
+                const task = this.tasks.find(t => t.id === taskId);
+                if (!task || !task.isRunning) return;
+
+                task.isRunning = false;
+                task.totalTime += Date.now() - task.startTime;
+                task.startTime = null;
+
+                if (this.intervals[taskId]) {
+                    clearInterval(this.intervals[taskId]);
+                    delete this.intervals[taskId];
+                }
+
+                this.saveToStorage();
+                this.render();
+                this.updateStats();
+                this.updateAnalysis();
+            }
+
+            deleteTask(taskId) {
+                if (!confirm('Are you sure you want to delete this task?')) return;
+
+                if (this.intervals[taskId]) {
+                    clearInterval(this.intervals[taskId]);
+                    delete this.intervals[taskId];
+                }
+
+                this.tasks = this.tasks.filter(t => t.id !== taskId);
+                this.saveToStorage();
+                this.render();
+                this.updateStats();
+                this.updateAnalysis();
+            }
+
+            getCurrentTime(task) {
+                if (task.isRunning && task.startTime) {
+                    return task.totalTime + (Date.now() - task.startTime);
+                }
+                return task.totalTime;
+            }
+
+            formatTime(milliseconds) {
+                const totalSeconds = Math.floor(milliseconds / 1000);
+                const hours = Math.floor(totalSeconds / 3600);
+                const minutes = Math.floor((totalSeconds % 3600) / 60);
+                const seconds = totalSeconds % 60;
+
+                return `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+            }
+
+            updateTaskDisplay(taskId) {
+                const task = this.tasks.find(t => t.id === taskId);
+                if (!task || !task.isRunning) return;
+
+                const timeElement = document.querySelector(`[data-task-id="${taskId}"] .task-time`);
+                const progressElement = document.querySelector(`[data-task-id="${taskId}"] .task-progress-bar`);
+
+                if (timeElement) {
+                    timeElement.textContent = this.formatTime(this.getCurrentTime(task));
+                }
+
+                if (progressElement && task.targetTime) {
+                    const currentTimeMinutes = this.getCurrentTime(task) / 60000;
+                    const progress = Math.min(100, (currentTimeMinutes / task.targetTime) * 100);
+                    progressElement.style.width = `${progress}%`;
+
+                    if (progress >= 100) {
+                        progressElement.classList.add('overtime');
+                    } else {
+                        progressElement.classList.remove('overtime');
+                    }
+                }
+
+                this.updateStats();
+            }
+
+            updateStats() {
+                const totalTasks = this.tasks.length;
+                const totalTime = this.tasks.reduce((sum, task) => sum + this.getCurrentTime(task), 0);
+
+                document.getElementById('totalTasks').textContent = totalTasks;
+                document.getElementById('totalTime').textContent = this.formatTime(totalTime);
+
+                const clearBtn = document.getElementById('clearBtn');
+                const logsBtn = document.getElementById('logsBtn');
+                clearBtn.style.display = totalTasks > 0 ? 'block' : 'none';
+
+                // Show logs button if there are any logs
+                const logs = JSON.parse(localStorage.getItem('dailyLogs')) || {};
+                logsBtn.style.display = Object.keys(logs).length > 0 ? 'block' : 'none';
+            }
+
+            updateAnalysis() {
+                const analysisSection = document.getElementById('analysisSection');
+
+                if (this.tasks.length === 0) {
+                    analysisSection.style.display = 'none';
+                    return;
+                }
+
+                analysisSection.style.display = 'block';
+                this.drawPieChart();
+                this.drawStatusChart();
+                this.updateInsights();
+            }
+
+            drawPieChart() {
+                const canvas = document.getElementById('pieChart');
+                const ctx = canvas.getContext('2d');
+
+                // Set canvas size
+                canvas.width = 300;
+                canvas.height = 300;
+
+                const tasksWithTime = this.tasks.filter(task => this.getCurrentTime(task) > 0);
+
+                if (tasksWithTime.length === 0) {
+                    ctx.clearRect(0, 0, canvas.width, canvas.height);
+                    ctx.fillStyle = '#7f8c8d';
+                    ctx.font = '16px Arial';
+                    ctx.textAlign = 'center';
+                    ctx.fillText('No time tracked yet', canvas.width / 2, canvas.height / 2);
+                    return;
+                }
+
+                const totalTime = tasksWithTime.reduce((sum, task) => sum + this.getCurrentTime(task), 0);
+                const colors = ['#3498db', '#e74c3c', '#2ecc71', '#f39c12', '#9b59b6', '#1abc9c', '#e67e22', '#34495e'];
+
+                let currentAngle = -Math.PI / 2;
+                const centerX = canvas.width / 2;
+                const centerY = canvas.height / 2;
+                const radius = 100;
+
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+                tasksWithTime.forEach((task, index) => {
+                    const taskTime = this.getCurrentTime(task);
+                    const sliceAngle = (taskTime / totalTime) * 2 * Math.PI;
+
+                    // Draw slice
+                    ctx.beginPath();
+                    ctx.moveTo(centerX, centerY);
+                    ctx.arc(centerX, centerY, radius, currentAngle, currentAngle + sliceAngle);
+                    ctx.closePath();
+                    ctx.fillStyle = colors[index % colors.length];
+                    ctx.fill();
+
+                    // Draw label
+                    if (sliceAngle > 0.2) {
+                        const labelAngle = currentAngle + sliceAngle / 2;
+                        const labelX = centerX + Math.cos(labelAngle) * (radius * 0.7);
+                        const labelY = centerY + Math.sin(labelAngle) * (radius * 0.7);
+
+                        ctx.fillStyle = 'white';
+                        ctx.font = 'bold 12px Arial';
+                        ctx.textAlign = 'center';
+                        const percentage = Math.round((taskTime / totalTime) * 100);
+                        ctx.fillText(`${percentage}%`, labelX, labelY);
+                    }
+
+                    currentAngle += sliceAngle;
+                });
+            }
+
+            drawStatusChart() {
+                const canvas = document.getElementById('statusChart');
+                const ctx = canvas.getContext('2d');
+
+                // Set canvas size
+                canvas.width = 300;
+                canvas.height = 300;
+
+                const runningTasks = this.tasks.filter(task => task.isRunning).length;
+                const completedTasks = this.tasks.filter(task => {
+                    const currentTime = this.getCurrentTime(task);
+                    return task.targetTime && currentTime >= task.targetTime * 60000;
+                }).length;
+                const incompleteTasks = this.tasks.length - completedTasks - runningTasks;
+
+                const data = [
+                    { label: 'Running', value: runningTasks, color: '#27ae60' },
+                    { label: 'Completed', value: completedTasks, color: '#3498db' },
+                    { label: 'Incomplete', value: incompleteTasks, color: '#95a5a6' }
+                ].filter(item => item.value > 0);
+
+                if (data.length === 0) {
+                    ctx.clearRect(0, 0, canvas.width, canvas.height);
+                    ctx.fillStyle = '#7f8c8d';
+                    ctx.font = '16px Arial';
+                    ctx.textAlign = 'center';
+                    ctx.fillText('No tasks yet', canvas.width / 2, canvas.height / 2);
+                    return;
+                }
+
+                const total = data.reduce((sum, item) => sum + item.value, 0);
+                let currentAngle = -Math.PI / 2;
+                const centerX = canvas.width / 2;
+                const centerY = canvas.height / 2;
+                const radius = 100;
+
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+                data.forEach((item, index) => {
+                    const sliceAngle = (item.value / total) * 2 * Math.PI;
+
+                    // Draw slice
+                    ctx.beginPath();
+                    ctx.moveTo(centerX, centerY);
+                    ctx.arc(centerX, centerY, radius, currentAngle, currentAngle + sliceAngle);
+                    ctx.closePath();
+                    ctx.fillStyle = item.color;
+                    ctx.fill();
+
+                    // Draw label
+                    if (sliceAngle > 0.2) {
+                        const labelAngle = currentAngle + sliceAngle / 2;
+                        const labelX = centerX + Math.cos(labelAngle) * (radius * 0.7);
+                        const labelY = centerY + Math.sin(labelAngle) * (radius * 0.7);
+
+                        ctx.fillStyle = 'white';
+                        ctx.font = 'bold 14px Arial';
+                        ctx.textAlign = 'center';
+                        ctx.fillText(item.value.toString(), labelX, labelY);
+                    }
+
+                    currentAngle += sliceAngle;
+                });
+
+                // Draw legend
+                const legendStartY = canvas.height + 20;
+                data.forEach((item, index) => {
+                    const legendY = legendStartY + (index * 20);
+                    ctx.fillStyle = item.color;
+                    ctx.fillRect(10, legendY, 15, 15);
+                    ctx.fillStyle = '#2c3e50';
+                    ctx.font = '12px Arial';
+                    ctx.textAlign = 'left';
+                    ctx.fillText(`${item.label}: ${item.value}`, 30, legendY + 12);
+                });
+            }
+
+            updateInsights() {
+                const insights = document.getElementById('insights');
+                const productivity = this.calculateProductivityScore();
+
+                insights.innerHTML = `
+                    <div class="insight-card">
+                        <div class="insight-icon">⚡</div>
+                        <div class="insight-title">Productivity Score</div>
+                        <div class="insight-value">${productivity}%</div>
+                        <div class="insight-description">Based on target completion rate</div>
+                    </div>
+                `;
+            }
+
+            calculateProductivityScore() {
+                if (this.tasks.length === 0) return 0;
+
+                const completedTasks = this.tasks.filter(task => {
+                    const currentTime = this.getCurrentTime(task);
+                    return task.targetTime && currentTime >= task.targetTime * 60000;
+                }).length;
+
+                return Math.round((completedTasks / this.tasks.length) * 100);
+            }
+
+            clearAllTasks() {
+                if (!confirm('Are you sure you want to delete all tasks? This action cannot be undone.')) return;
+
+                // Clear all intervals
+                Object.values(this.intervals).forEach(interval => clearInterval(interval));
+                this.intervals = {};
+
+                this.tasks = [];
+                this.saveToStorage();
+                this.render();
+                this.updateStats();
+                this.updateAnalysis();
+            }
+
+            showLogs() {
+                const logs = JSON.parse(localStorage.getItem('dailyLogs')) || {};
+                const logsContent = document.getElementById('logsContent');
+                const modal = document.getElementById('logsModal');
+
+                if (Object.keys(logs).length === 0) {
+                    logsContent.innerHTML = '<p>No logs available yet.</p>';
+                } else {
+                    const sortedDates = Object.keys(logs).sort().reverse();
+                    logsContent.innerHTML = sortedDates.map(date => {
+                        const log = logs[date];
+                        const dateObj = new Date(date);
+                        const formattedDate = dateObj.toLocaleDateString('en-US', {
+                            weekday: 'long',
+                            year: 'numeric',
+                            month: 'long',
+                            day: 'numeric'
+                        });
+
+                        return `
+                            <div class="log-entry">
+                                <div class="log-date">${formattedDate}</div>
+                                <div><strong>Tasks:</strong> ${log.totalTasks}</div>
+                                <div><strong>Total Time:</strong> ${this.formatTime(log.totalTime)}</div>
+                                <div><strong>Completed:</strong> ${log.completedTasks}/${log.totalTasks}</div>
+                                <div><strong>Success Rate:</strong> ${log.totalTasks > 0 ? Math.round((log.completedTasks / log.totalTasks) * 100) : 0}%</div>
+                                <div class="log-tasks">
+                                    ${log.tasks.map(task => `
+                                        <div class="log-task">
+                                            ${task.name}: ${this.formatTime(task.totalTime)} 
+                                            ${task.targetTime ? `/ ${task.targetTime}min target` : ''} 
+                                            ${task.completed ? '✅' : '❌'}
+                                        </div>
+                                    `).join('')}
+                                </div>
+                            </div>
+                        `;
+                    }).join('');
+                }
+
+                modal.style.display = 'block';
+            }
+
+            render() {
+                const tasksList = document.getElementById('tasksList');
+
+                if (this.tasks.length === 0) {
+                    tasksList.innerHTML = `
+                        <div class="empty-state">
+                            <h3>No tasks yet!</h3>
+                            <p>Add your first task above with a target time to start tracking</p>
+                        </div>
+                    `;
+                    return;
+                }
+
+                tasksList.innerHTML = this.tasks.map(task => {
+                    const currentTime = this.getCurrentTime(task);
+                    const currentTimeMinutes = currentTime / 60000;
+                    const isCompleted = task.targetTime && currentTimeMinutes >= task.targetTime;
+                    const progress = task.targetTime ? Math.min(100, (currentTimeMinutes / task.targetTime) * 100) : 0;
+
+                    const statusClass = task.isRunning ? 'status-running' :
+                        isCompleted ? 'status-completed' : 'status-paused';
+                    const statusText = task.isRunning ? 'Running' :
+                        isCompleted ? 'Completed' : 'In Progress';
+
+                    return `
+                        <div class="task-item ${task.isRunning ? 'running' : ''}" data-task-id="${task.id}">
+                            <div class="task-header">
+                                <div>
+                                    <div class="task-name">${this.escapeHtml(task.name)}</div>
+                                    <div class="task-target">Target: ${task.targetTime} minutes</div>
+                                </div>
+                                <div class="task-time">${this.formatTime(currentTime)}</div>
+                                <div class="task-status ${statusClass}">${statusText}</div>
+                            </div>
+                            <div class="task-progress">
+                                <div class="task-progress-bar ${progress >= 100 ? 'overtime' : ''}" style="width: ${progress}%"></div>
+                            </div>
+                            <div class="task-controls">
+                                ${task.isRunning ?
+                            `<button class="btn btn-warning btn-small" onclick="taskTracker.pauseTask(${task.id})">⏸️ Pause</button>` :
+                            `<button class="btn btn-success btn-small" onclick="taskTracker.startTask(${task.id})">▶️ Start</button>`
+                        }
+                                <button class="btn btn-danger btn-small" onclick="taskTracker.deleteTask(${task.id})">🗑️ Delete</button>
+                            </div>
+                        </div>
+                    `;
+                }).join('');
+
+                // Restart intervals for running tasks
+                this.tasks.forEach(task => {
+                    if (task.isRunning && !this.intervals[task.id]) {
+                        this.intervals[task.id] = setInterval(() => {
+                            this.updateTaskDisplay(task.id);
+                        }, 100);
+                    }
+                });
+            }
+
+            escapeHtml(text) {
+                const div = document.createElement('div');
+                div.textContent = text;
+                return div.innerHTML;
+            }
+
+            saveToStorage() {
+                localStorage.setItem(`tasks_${this.currentDate}`, JSON.stringify(this.tasks));
+                localStorage.setItem(`nextId_${this.currentDate}`, this.nextId.toString());
+            }
+        }
+
+        // Initialize the task tracker
+        const taskTracker = new TaskTracker();
+
+        // Global functions for button clicks
+        function addTask() {
+            taskTracker.addTask();
+        }
+
+        function clearAllTasks() {
+            taskTracker.clearAllTasks();
+        }
+
+        function showLogs() {
+            taskTracker.showLogs();
+        }
+
+        function closeLogs() {
+            document.getElementById('logsModal').style.display = 'none';
+        }
+
+        // Close modal when clicking outside
+        window.onclick = function (event) {
+            const modal = document.getElementById('logsModal');
+            if (event.target === modal) {
+                modal.style.display = 'none';
+            }
+        }
+
+        // Update stats and analysis every second for running timers
+        setInterval(() => {
+            taskTracker.updateStats();
+            taskTracker.updateAnalysis();
+        }, 1000);
+
+        // Check for date change every minute
+        setInterval(() => {
+            const newDate = taskTracker.getCurrentDate();
+            if (newDate !== taskTracker.currentDate) {
+                // Save current day before switching
+                taskTracker.saveToLogs(taskTracker.currentDate);
+                location.reload(); // Refresh to load new day
+            }
+        }, 60000);
+    </script>
+</body>
+
+</html>
