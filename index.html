@@ -1051,7 +1051,7 @@
                     <div class="insight-card">
                         <div class="insight-icon">🏆</div>
                         <div class="insight-title">Most Active Task</div>
-                        <div class="insight-value">${mostProductiveTask.name || 'N/A'}</div>
+                        <div class="insight-value">${this.escapeHtml(mostProductiveTask.name || 'N/A')}</div>
                         <div class="insight-description">Task with the most time logged today</div>
                     </div>
                 `;
@@ -1061,12 +1061,13 @@
                 if (this.tasks.length === 0) return { name: 'N/A', time: 0 };
                 return this.tasks.reduce((maxTask, currentTask) => {
                     const currentTime = this.getCurrentTime(currentTask);
-                    return currentTime > this.getCurrentTime(maxTask) ? currentTask : maxTask;
+                    const maxTime = this.getCurrentTime(maxTask);
+                    return currentTime > maxTime ? currentTask : maxTask;
                 }, this.tasks[0]);
             }
 
 
-            calculateProductivityScore() {
+            calculateProductivityScore() { // For current day's tasks
                 let totalEffectiveTimeSpent = 0;
                 let totalTargetTimeForAllTasks = 0;
 
@@ -1074,6 +1075,24 @@
                     if (task.targetTime && task.targetTime > 0) {
                         const targetTimeMs = task.targetTime * 60000;
                         const timeSpentMs = this.getCurrentTime(task);
+
+                        totalEffectiveTimeSpent += Math.min(timeSpentMs, targetTimeMs);
+                        totalTargetTimeForAllTasks += targetTimeMs;
+                    }
+                });
+
+                if (totalTargetTimeForAllTasks === 0) return 0;
+                return Math.round((totalEffectiveTimeSpent / totalTargetTimeForAllTasks) * 100);
+            }
+
+            calculateLogProductivityScore(loggedTasks) { // For logged tasks
+                let totalEffectiveTimeSpent = 0;
+                let totalTargetTimeForAllTasks = 0;
+
+                loggedTasks.forEach(task => {
+                    if (task.targetTime && task.targetTime > 0) {
+                        const targetTimeMs = task.targetTime * 60000; // targetTime is in minutes
+                        const timeSpentMs = task.totalTime || 0; // totalTime is already in ms
 
                         totalEffectiveTimeSpent += Math.min(timeSpentMs, targetTimeMs);
                         totalTargetTimeForAllTasks += targetTimeMs;
@@ -1099,7 +1118,7 @@
 
             showLogs() {
                 const logs = JSON.parse(localStorage.getItem('dailyLogs')) || {};
-                const logsContentEl = document.getElementById('logsContent'); // Renamed for clarity
+                const logsContentEl = document.getElementById('logsContent');
                 const modal = document.getElementById('logsModal');
 
                 if (Object.keys(logs).length === 0) {
@@ -1109,7 +1128,6 @@
                     logsContentEl.innerHTML = sortedDates.map(date => {
                         const log = logs[date];
                         const dateObj = new Date(date);
-                        // Adjust date to be interpreted as local, not UTC for formatting
                         const displayDate = new Date(dateObj.getUTCFullYear(), dateObj.getUTCMonth(), dateObj.getUTCDate());
 
                         const formattedDate = displayDate.toLocaleDateString('en-US', {
@@ -1122,7 +1140,7 @@
                                 <div><strong>Total Tasks:</strong> ${log.totalTasks}</div>
                                 <div><strong>Total Time Logged:</strong> ${this.formatTime(log.totalTime)}</div>
                                 <div><strong>Tasks Met Target:</strong> ${log.completedTasks}/${log.totalTasks}</div>
-                                <div><strong>Target Success Rate:</strong> ${log.totalTasks > 0 ? Math.round((log.completedTasks / log.totalTasks) * 100) : 0}%</div>
+                                <div><strong>Productivity Score:</strong> ${this.calculateLogProductivityScore(log.tasks)}%</div>
                                 <div class="log-tasks">
                                     ${log.tasks.map(task => `
                                         <div class="log-task">
