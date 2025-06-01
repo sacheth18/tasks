@@ -719,8 +719,8 @@
                     alert('Task name is too long! Please keep it under 100 characters.');
                     return;
                 }
-                if (isNaN(targetTime) || targetTime < 1) { // Check if targetTime is not a number or less than 1
-                    alert('Please enter a valid target time in minutes (e.g., 30)!');
+                if (isNaN(targetTime) || targetTime < 1 || targetTime > 1440) {
+                    alert('Please enter a valid target time in minutes (1-1440)!');
                     return;
                 }
 
@@ -748,16 +748,47 @@
                 const task = this.tasks.find(t => t.id === taskId);
                 if (!task) return;
 
-                const newName = prompt('Enter new task name:', task.name);
-                if (newName !== null && newName.trim() !== '') {
-                    if (newName.trim().length > 100) {
-                        alert('Task name is too long! Please keep it under 100 characters.');
-                        return;
+                let changed = false;
+
+                // Edit Name
+                const newNamePrompt = prompt('Enter new task name (leave blank or cancel to keep current):', task.name);
+                if (newNamePrompt !== null) { // Not cancelled
+                    const newName = newNamePrompt.trim();
+                    if (newName !== '' && newName !== task.name) {
+                        if (newName.length > 100) {
+                            alert('Task name is too long! Please keep it under 100 characters.');
+                        } else {
+                            task.name = newName;
+                            changed = true;
+                        }
                     }
-                    task.name = newName.trim();
+                }
+
+                // Edit Target Time
+                // task.targetTime is guaranteed to be a positive number by addTask
+                const newTargetTimeStrPrompt = prompt(`Enter new target time in minutes (1-1440, leave blank or cancel to keep current: ${task.targetTime}):`, task.targetTime.toString());
+
+                if (newTargetTimeStrPrompt !== null) { // User did not cancel
+                    const newTargetTimeStr = newTargetTimeStrPrompt.trim();
+
+                    // Only attempt to parse and update if the input is not blank AND it's different from the current target time string
+                    if (newTargetTimeStr !== '' && newTargetTimeStr !== task.targetTime.toString()) {
+                        const newTargetTime = parseInt(newTargetTimeStr);
+                        if (!isNaN(newTargetTime) && newTargetTime > 0 && newTargetTime <= 1440) {
+                            task.targetTime = newTargetTime;
+                            changed = true;
+                        } else {
+                            alert('Invalid target time. Please enter a positive number of minutes (1-1440). Target time not changed.');
+                        }
+                    }
+                    // If newTargetTimeStr is blank, or same as task.targetTime.toString(), no change is made as per prompt instructions.
+                }
+
+                if (changed) {
                     this.saveToStorage();
                     this.render();
-                    this.updateAnalysis(); // Name might be in charts
+                    this.updateStats(); // Stats might change if target time affects completion perception
+                    this.updateAnalysis(); // Analysis (like productivity score) depends on target time
                 }
             }
 
@@ -1135,22 +1166,22 @@
                         });
 
                         return `
-                            <div class="log-entry">
-                                <div class="log-date">${formattedDate}</div>
-                                <div><strong>Total Tasks:</strong> ${log.totalTasks}</div>
-                                <div><strong>Total Time Logged:</strong> ${this.formatTime(log.totalTime)}</div>
-                                <div><strong>Tasks Met Target:</strong> ${log.completedTasks}/${log.totalTasks}</div>
-                                <div><strong>Productivity Score:</strong> ${this.calculateLogProductivityScore(log.tasks)}%</div>
-                                <div class="log-tasks">
-                                    ${log.tasks.map(task => `
-                                        <div class="log-task">
-                                            ${this.escapeHtml(task.name)}: ${this.formatTime(task.totalTime)} 
-                                            ${task.targetTime ? `(Target: ${task.targetTime}m)` : ''} 
-                                            ${task.completed ? '✅' : (task.targetTime ? '❌' : '')}
-                                        </div>
-                                    `).join('')}
-                                </div>
-                            </div>`;
+                                <div class="log-entry">
+                                    <div class="log-date">${formattedDate}</div>
+                                    <div><strong>Total Tasks:</strong> ${log.totalTasks}</div>
+                                    <div><strong>Total Time Logged:</strong> ${this.formatTime(log.totalTime)}</div>
+                                    <div><strong>Tasks Met Target:</strong> ${log.completedTasks}/${log.totalTasks}</div>
+                                    <div><strong>Productivity Score:</strong> ${this.calculateLogProductivityScore(log.tasks)}%</div>
+                                    <div class="log-tasks">
+                                        ${log.tasks.map(task => `
+                                            <div class="log-task">
+                                                ${this.escapeHtml(task.name)}: ${this.formatTime(task.totalTime)} 
+                                                ${task.targetTime ? `(Target: ${task.targetTime}m)` : ''} 
+                                                ${task.completed ? '✅' : (task.targetTime ? '❌' : '')}
+                                            </div>
+                                        `).join('')}
+                                    </div>
+                                </div>`;
                     }).join('');
                 }
                 modal.style.display = 'block';
@@ -1180,27 +1211,27 @@
                     }
 
                     return `
-                        <div class="task-item ${task.isRunning ? 'running' : ''}" data-task-id="${task.id}">
-                            <div class="task-header">
-                                <div>
-                                    <div class="task-name">${this.escapeHtml(task.name)}</div>
-                                    <div class="task-target">Target: ${task.targetTime} minutes</div>
+                            <div class="task-item ${task.isRunning ? 'running' : ''}" data-task-id="${task.id}">
+                                <div class="task-header">
+                                    <div>
+                                        <div class="task-name">${this.escapeHtml(task.name)}</div>
+                                        <div class="task-target">Target: ${task.targetTime} minutes</div>
+                                    </div>
+                                    <div class="task-time">${this.formatTime(currentTime)}</div>
+                                    <div class="task-status ${statusClass}">${statusText}</div>
                                 </div>
-                                <div class="task-time">${this.formatTime(currentTime)}</div>
-                                <div class="task-status ${statusClass}">${statusText}</div>
-                            </div>
-                            <div class="task-progress">
-                                <div class="task-progress-bar ${progress >= 100 && currentTimeMinutes > task.targetTime ? 'overtime' : ''}" style="width: ${progress}%"></div>
-                            </div>
-                            <div class="task-controls">
-                                ${task.isRunning ?
+                                <div class="task-progress">
+                                    <div class="task-progress-bar ${progress >= 100 && currentTimeMinutes > task.targetTime ? 'overtime' : ''}" style="width: ${progress}%"></div>
+                                </div>
+                                <div class="task-controls">
+                                    ${task.isRunning ?
                             `<button class="btn btn-warning btn-small" onclick="taskTracker.pauseTask(${task.id})">⏸️ Pause</button>` :
                             `<button class="btn btn-success btn-small" onclick="taskTracker.startTask(${task.id})">▶️ Start</button>`
                         }
-                                <button class="btn btn-info btn-small" onclick="taskTracker.editTask(${task.id})">✏️ Edit</button>
-                                <button class="btn btn-danger btn-small" onclick="taskTracker.deleteTask(${task.id})">🗑️ Delete</button>
-                            </div>
-                        </div>`;
+                                    <button class="btn btn-info btn-small" onclick="taskTracker.editTask(${task.id})">✏️ Edit</button>
+                                    <button class="btn btn-danger btn-small" onclick="taskTracker.deleteTask(${task.id})">🗑️ Delete</button>
+                                </div>
+                            </div>`;
                 }).join('');
 
                 // Ensure intervals are correctly managed after re-render
