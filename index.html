@@ -663,9 +663,17 @@
                 });
             }
 
+            /**
+             * CORRECTED FUNCTION
+             * Gets the current date in YYYY-MM-DD format based on the user's LOCAL timezone.
+             * This ensures the daily reset happens at local midnight.
+             */
             getCurrentDate() {
                 const now = new Date();
-                return now.toISOString().split('T')[0]; // YYYY-MM-DD format
+                const year = now.getFullYear();
+                const month = (now.getMonth() + 1).toString().padStart(2, '0'); // months are 0-indexed
+                const day = now.getDate().toString().padStart(2, '0');
+                return `${year}-${month}-${day}`;
             }
 
             checkDateChange() {
@@ -1158,10 +1166,12 @@
                     const sortedDates = Object.keys(logs).sort((a, b) => new Date(b) - new Date(a)); // Sort newest first
                     logsContentEl.innerHTML = sortedDates.map(date => {
                         const log = logs[date];
-                        const dateObj = new Date(date);
-                        const displayDate = new Date(dateObj.getUTCFullYear(), dateObj.getUTCMonth(), dateObj.getUTCDate());
+                        // The date string is 'YYYY-MM-DD', which JS interprets as UTC.
+                        // To display it correctly as the user's local date, we create the Date object
+                        // by specifying the time part, ensuring it's treated as a local time.
+                        const dateObj = new Date(date + "T00:00:00");
 
-                        const formattedDate = displayDate.toLocaleDateString('en-US', {
+                        const formattedDate = dateObj.toLocaleDateString('en-US', {
                             weekday: 'long', year: 'numeric', month: 'long', day: 'numeric'
                         });
 
